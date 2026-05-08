@@ -40,8 +40,16 @@ const bloodCampSchema = new mongoose.Schema(
       enum: ["Upcoming", "Ongoing", "Completed", "Cancelled"],
       default: "Upcoming",
     },
+    registeredDonors: [
+      {
+        donor: { type: mongoose.Schema.Types.ObjectId, ref: "Donor" },
+        scheduledAt: { type: Date, default: Date.now },
+        status: { type: String, enum: ["booked", "cancelled"], default: "booked" },
+      },
+    ],
   },
   { timestamps: true }
 );
 
 export default mongoose.model("BloodCamp", bloodCampSchema);
+

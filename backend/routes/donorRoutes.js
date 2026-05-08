@@ -1,5 +1,5 @@
 import express from "express";
-import { getDonorCamps, getDonorHistory, getDonorProfile, getDonorStats, updateDonorProfile } from "../controllers/donorController.js";
+import { getDonorCamps, getDonorHistory, getDonorProfile, getDonorStats, updateDonorProfile, bookCampSlot, cancelCampBooking } from "../controllers/donorController.js";
 import { protectDonor } from "../middlewares/donorMiddleware.js";
 
 
@@ -14,6 +14,10 @@ router.get("/camps", protectDonor, getDonorCamps);
 router.get("/history", protectDonor, getDonorHistory);
 
 router.get("/stats", protectDonor, getDonorStats);
+
+// Camp booking routes
+router.post("/camps/:id/book", protectDonor, bookCampSlot);
+router.delete("/camps/:id/cancel", protectDonor, cancelCampBooking);
 
 
 

@@ -143,25 +143,34 @@ export const updateDonorProfile = async (req, res) => {
 /* 🏥 Get Public Blood Camps for Donors */
 export const getDonorCamps = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, page = 1, limit = 10, q } = req.query;
 
     const filter = {};
-    
-    // Filter by status if provided (e.g., 'active', 'completed', 'cancelled')
+
+    // Filter by status if provided
     if (status && status !== "all") {
       filter.status = status;
     }
 
+    // Search by title, venue, city
+    if (q) {
+      filter.$or = [
+        { title: { $regex: q, $options: "i" } },
+        { "location.venue": { $regex: q, $options: "i" } },
+        { "location.city": { $regex: q, $options: "i" } },
+        { "location.state": { $regex: q, $options: "i" } },
+      ];
+    }
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Use Promise.all to fetch camps and total count concurrently (efficient)
     const [camps, total] = await Promise.all([
-      // Sort by date ascending (upcoming first)
       BloodCamp.find(filter)
-        .sort({ date: 1 }) 
+        .sort({ date: 1 })
         .skip(skip)
-        .limit(parseInt(limit)),
-      
+        .limit(parseInt(limit))
+        .populate("hospital", "name")  // populate hospital name for donor view
+        .lean(),                        // lean() for performance
       BloodCamp.countDocuments(filter),
     ]);
 
@@ -178,13 +187,13 @@ export const getDonorCamps = async (req, res) => {
     });
   } catch (error) {
     console.error("Get Donor Camps Error:", error);
-    // Better to return 401 if it's an Auth issue
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
         return res.status(401).json({ success: false, message: "Unauthorized. Please log in." });
     }
     res.status(500).json({ success: false, message: "Failed to fetch blood camps" });
   }
 };
+
 
 
 /**
@@ -546,6 +555,143 @@ export const getRecentDonations = async (req, res) => {
   } catch (err) {
     console.error("Get recent donations error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch recent donations" });
+  }
+};
+
+/**
+ * @desc Book a slot in a blood donation camp
+ * @route POST /api/donor/camps/:id/book
+ * @access Private (Donor)
+ */
+export const bookCampSlot = async (req, res) => {
+  try {
+    const donorId = req.donor?.id || req.donor?._id;
+    const { id: campId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(campId)) {
+      return res.status(400).json({ success: false, message: "Invalid camp ID" });
+    }
+
+    const camp = await BloodCamp.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ success: false, message: "Camp not found" });
+    }
+
+    // Only allow booking for Upcoming or Ongoing camps
+    if (!["Upcoming", "Ongoing"].includes(camp.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot book a slot for a ${camp.status} camp`,
+      });
+    }
+
+    // Check if donor already has an active booking
+    const alreadyBooked = camp.registeredDonors.some(
+      (r) => r.donor.toString() === donorId.toString() && r.status === "booked"
+    );
+    if (alreadyBooked) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already booked a slot for this camp",
+      });
+    }
+
+    // Check capacity (count only active bookings)
+    const activeBookings = camp.registeredDonors.filter((r) => r.status === "booked").length;
+    if (camp.expectedDonors > 0 && activeBookings >= camp.expectedDonors) {
+      return res.status(400).json({ success: false, message: "Camp is full. No slots available." });
+    }
+
+    // Add donor to registeredDonors
+    camp.registeredDonors.push({
+      donor: donorId,
+      scheduledAt: new Date(),
+      status: "booked",
+    });
+
+    await camp.save();
+
+    // Log to facility history
+    await Facility.findByIdAndUpdate(camp.hospital, {
+      $push: {
+        history: {
+          eventType: "Blood Camp",
+          description: `Donor registered for camp: "${camp.title}"`,
+          date: new Date(),
+          referenceId: camp._id,
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Slot booked successfully! See you at the camp.",
+      data: {
+        campId: camp._id,
+        campTitle: camp.title,
+        scheduledAt: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error("Book Camp Slot Error:", error);
+    res.status(500).json({ success: false, message: "Failed to book slot" });
+  }
+};
+
+/**
+ * @desc Cancel a camp slot booking
+ * @route DELETE /api/donor/camps/:id/cancel
+ * @access Private (Donor)
+ */
+export const cancelCampBooking = async (req, res) => {
+  try {
+    const donorId = req.donor?.id || req.donor?._id;
+    const { id: campId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(campId)) {
+      return res.status(400).json({ success: false, message: "Invalid camp ID" });
+    }
+
+    const camp = await BloodCamp.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ success: false, message: "Camp not found" });
+    }
+
+    // Find the donor's active booking
+    const booking = camp.registeredDonors.find(
+      (r) => r.donor.toString() === donorId.toString() && r.status === "booked"
+    );
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "No active booking found for this camp",
+      });
+    }
+
+    // Mark as cancelled
+    booking.status = "cancelled";
+    await camp.save();
+
+    // Log to facility history
+    await Facility.findByIdAndUpdate(camp.hospital, {
+      $push: {
+        history: {
+          eventType: "Blood Camp",
+          description: `Donor cancelled booking for camp: "${camp.title}"`,
+          date: new Date(),
+          referenceId: camp._id,
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully",
+    });
+  } catch (error) {
+    console.error("Cancel Camp Booking Error:", error);
+    res.status(500).json({ success: false, message: "Failed to cancel booking" });
   }
 };
 

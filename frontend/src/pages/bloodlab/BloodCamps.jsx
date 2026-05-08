@@ -14,6 +14,11 @@ import {
   CheckCircle,
   XCircle,
   MoreVertical,
+  UserCheck,
+  Loader2,
+  Phone,
+  Mail,
+  Droplets,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -59,6 +64,11 @@ const BloodCamps = () => {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [actionMenu, setActionMenu] = useState(null);
+
+  // Registered Donors panel
+  const [expandedCampId, setExpandedCampId] = useState(null);
+  const [donorsList, setDonorsList] = useState({});
+  const [donorsLoading, setDonorsLoading] = useState(false);
 
   const token = localStorage.getItem("token");
   // Fixed API URL - removed /blood-lab if it doesn't exist
@@ -303,6 +313,43 @@ const BloodCamps = () => {
     console.log("🎯 BloodCamps component mounted");
     fetchCamps();
   }, [filters]);
+
+  // Fetch registered donors for a camp
+  const fetchCampDonors = async (campId) => {
+    // Toggle close if already open
+    if (expandedCampId === campId) {
+      setExpandedCampId(null);
+      return;
+    }
+
+    setExpandedCampId(campId);
+
+    // Use cached data if available
+    if (donorsList[campId]) return;
+
+    setDonorsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/camps/${campId}/donors`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDonorsList((prev) => ({ ...prev, [campId]: data.data || [] }));
+      } else {
+        toast.error(data.message || "Failed to fetch donors");
+        setDonorsList((prev) => ({ ...prev, [campId]: [] }));
+      }
+    } catch (err) {
+      console.error("Fetch camp donors error:", err);
+      toast.error("Failed to fetch registered donors");
+      setDonorsList((prev) => ({ ...prev, [campId]: [] }));
+    } finally {
+      setDonorsLoading(false);
+    }
+  };
 
   // Reset form
   const resetForm = () => {
@@ -1154,6 +1201,81 @@ const BloodCamps = () => {
                         <div className="flex items-center text-green-600">
                           <Users size={16} className="mr-2 flex-shrink-0" />
                           <span>Actual: {camp.actualDonors} donors</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Registered Donors Button */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => fetchCampDonors(camp._id)}
+                        className="w-full flex items-center justify-between gap-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold py-2 px-3 rounded-xl transition-all duration-200 text-sm"
+                      >
+                        <span className="flex items-center gap-2">
+                          <UserCheck size={15} />
+                          Registered Donors
+                          {donorsList[camp._id] && (
+                            <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                              {donorsList[camp._id].length}
+                            </span>
+                          )}
+                        </span>
+                        {expandedCampId === camp._id ? (
+                          <ChevronUp size={15} />
+                        ) : (
+                          <ChevronDown size={15} />
+                        )}
+                      </button>
+
+                      {/* Expandable Donors List */}
+                      {expandedCampId === camp._id && (
+                        <div className="mt-3 border border-gray-200 rounded-xl overflow-hidden">
+                          {donorsLoading && !donorsList[camp._id] ? (
+                            <div className="flex items-center justify-center gap-2 py-4 text-gray-500 text-sm">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Loading donors...
+                            </div>
+                          ) : donorsList[camp._id]?.length === 0 ? (
+                            <div className="text-center py-4 text-gray-400 text-sm">
+                              No donors have booked a slot yet.
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead className="bg-red-50">
+                                  <tr>
+                                    <th className="text-left px-3 py-2 font-semibold text-red-700">#</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-red-700">Name</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-red-700">Phone</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-red-700">Blood</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-red-700">Booked At</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {donorsList[camp._id].map((donor, idx) => (
+                                    <tr key={donor._id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                      <td className="px-3 py-2 text-gray-500">{idx + 1}</td>
+                                      <td className="px-3 py-2 font-medium text-gray-800">{donor.fullName}</td>
+                                      <td className="px-3 py-2 text-gray-600">{donor.phone}</td>
+                                      <td className="px-3 py-2">
+                                        <span className="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">
+                                          {donor.bloodGroup}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-2 text-gray-500">
+                                        {new Date(donor.scheduledAt).toLocaleDateString("en-IN", {
+                                          day: "2-digit",
+                                          month: "short",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

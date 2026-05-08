@@ -689,3 +689,54 @@ export const getAllLabs = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc Get registered donors list for a specific camp
+ * @route GET /api/blood-lab/camps/:id/donors
+ * @access Private (Blood Lab)
+ */
+export const getCampRegisteredDonors = async (req, res) => {
+  try {
+    const labId = req.user._id;
+    const { id: campId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(campId)) {
+      return res.status(400).json({ success: false, message: "Invalid camp ID" });
+    }
+
+    // Only the lab that owns the camp can see its donors
+    const camp = await BloodCamp.findOne({ _id: campId, hospital: labId })
+      .populate({
+        path: "registeredDonors.donor",
+        select: "fullName email phone bloodGroup",
+      });
+
+    if (!camp) {
+      return res.status(404).json({ success: false, message: "Camp not found" });
+    }
+
+    // Return only booked (active) registrations
+    const registeredDonors = camp.registeredDonors
+      .filter((r) => r.status === "booked")
+      .map((r) => ({
+        _id: r._id,
+        donorId: r.donor?._id,
+        fullName: r.donor?.fullName || "Unknown",
+        email: r.donor?.email || "N/A",
+        phone: r.donor?.phone || "N/A",
+        bloodGroup: r.donor?.bloodGroup || "N/A",
+        scheduledAt: r.scheduledAt,
+        status: r.status,
+      }));
+
+    res.status(200).json({
+      success: true,
+      campTitle: camp.title,
+      totalRegistered: registeredDonors.length,
+      data: registeredDonors,
+    });
+  } catch (error) {
+    console.error("Get Camp Registered Donors Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch registered donors" });
+  }
+};

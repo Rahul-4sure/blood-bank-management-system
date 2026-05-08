@@ -13,6 +13,7 @@ import {
   updateBloodRequestStatus,
   getLabBloodRequests,
   getAllLabs,
+  getCampRegisteredDonors,
 } from "../controllers/bloodLabController.js";
 import { protectFacility } from "../middlewares/facilityMiddleware.js";
 import { getRecentDonations, markDonation, searchDonor } from "../controllers/donorController.js";
@@ -29,6 +30,9 @@ router.get("/camps", protectFacility, getBloodLabCamps);
 router.put("/camps/:id", protectFacility, updateBloodCamp);        // ADD THIS
 router.patch("/camps/:id/status", protectFacility, updateCampStatus); // ADD THIS
 router.delete("/camps/:id", protectFacility, deleteBloodCamp);
+
+// Camp registered donors
+router.get("/camps/:id/donors", protectFacility, getCampRegisteredDonors);
 
 // Blood stock routes
 router.post("/blood/add", protectFacility, addBloodStock);
