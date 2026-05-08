@@ -14,7 +14,7 @@ const app = express();
 app.use(express.json());
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"], // Allow both ports
+  origin: ["http://localhost:5173", "http://localhost:5174","https://blood-bank-management-system-9yc0.onrender.com"], // Allow both ports
   credentials: true,
 }));
 
