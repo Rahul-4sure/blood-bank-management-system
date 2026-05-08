@@ -40,6 +40,9 @@ app.use("/api/blood-lab", bloodLabRoutes);
 import hospitalRoutes from "./routes/hospitalRoutes.js";
 app.use("/api/hospital", hospitalRoutes);
 
+app.get("/", (req, res) => {
+  res.send("Server is running 🚀");
+});
 
 // 🗄️ DB Connection
 mongoose
