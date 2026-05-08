@@ -2,6 +2,7 @@ import { toast } from "react-hot-toast";
 
 export const handleAuthError = (navigate) => {
   localStorage.removeItem("token");
+  localStorage.removeItem("role");
   toast.error("Authentication error: Session expired. Please login again.");
   navigate("/login");
 };
@@ -25,6 +26,7 @@ export const makeAuthenticatedRequest = async (url, options = {}, navigate) => {
 
   const requestOptions = {
     ...options,
+    credentials: "include",
     headers: {
       ...defaultHeaders,
       ...options.headers,
@@ -52,6 +54,27 @@ export const makeAuthenticatedRequest = async (url, options = {}, navigate) => {
     }
     throw error;
   }
+};
+
+export const restoreSessionFromCookie = async () => {
+  const apiUrl = `${import.meta.env.VITE_API_URL || ""}/api/auth/session`;
+
+  const response = await fetch(apiUrl, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!response.ok) return false;
+
+  const data = await response.json();
+  if (!data.token) return false;
+
+  localStorage.setItem("token", data.token);
+  if (data.user?.role) {
+    localStorage.setItem("role", data.user.role);
+  }
+
+  return true;
 };
 
 export const isTokenValid = () => {

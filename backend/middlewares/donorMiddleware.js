@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
 import Donor from "../models/donorModel.js";
+import { getTokenFromRequest } from "../utils/authToken.js";
 
 export const protectDonor = async (req, res, next) => {
-  let token;
+  const token = getTokenFromRequest(req);
 
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+  if (token) {
     try {
-      token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       req.donor = await Donor.findById(decoded.id).select("-password");

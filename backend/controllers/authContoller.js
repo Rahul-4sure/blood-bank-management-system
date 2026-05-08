@@ -110,6 +110,15 @@ export const login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    const cookieOptions = {
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 din tak valid
+      httpOnly: true, // Security: frontend script cookie read nahi kar payega
+      secure: process.env.NODE_ENV === "production", // Sirf HTTPS pe kaam karega production mein
+      sameSite: "Lax",
+    };
+
+    res.cookie("token", token, cookieOptions);
+
     // Save last login
     user.lastLogin = new Date();
     if (user instanceof Facility) {
@@ -166,4 +175,12 @@ export const getProfile = async (req, res) => {
       .status(500)
       .json({ message: "Error fetching profile", error: error.message });
   }
+};
+
+export const getSession = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    token: req.token,
+    user: { id: req.user.id, role: req.user.role },
+  });
 };

@@ -14,10 +14,37 @@ const FACILITY_CATEGORIES = [
 ];
 
 const STATES = {
-  Maharashtra: ["Mumbai", "Pune", "Nagpur"],
-  Karnataka: ["Bengaluru", "Mysore", "Mangalore"],
-  Delhi: ["New Delhi", "Dwarka", "Rohini"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+  Andhra_Pradesh: ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore"],
+  Arunachal_Pradesh: ["Itanagar", "Tawang", "Ziro"],
+  Assam: ["Guwahati", "Dibrugarh", "Silchar", "Jorhat"],
+  Bihar: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"],
+  Chandigarh: ["Chandigarh"],
+  Chhattisgarh: ["Raipur", "Bhilai", "Bilaspur", "Korba"],
+  Delhi: ["New Delhi", "Rohini", "Dwarka", "South Delhi"],
+  Goa: ["Panaji", "Margao", "Vasco da Gama"],
+  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+  Haryana: ["Gurugram", "Faridabad", "Panipat", "Ambala"],
+  Himachal_Pradesh: ["Shimla", "Manali", "Dharamshala", "Solan"],
+  Jammu_and_Kashmir: ["Srinagar", "Jammu", "Anantnag"],
+  Jharkhand: ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro"],
+  Karnataka: ["Bengaluru", "Mysuru", "Mangalore", "Hubli"],
+  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur"],
+  Madhya_Pradesh: ["Indore", "Bhopal", "Gwalior", "Jabalpur"],
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik", "Thane"],
+  Manipur: ["Imphal"],
+  Meghalaya: ["Shillong"],
+  Mizoram: ["Aizawl"],
+  Nagaland: ["Kohima", "Dimapur"],
+  Odisha: ["Bhubaneswar", "Cuttack", "Rourkela"],
+  Punjab: ["Amritsar", "Jalandhar", "Ludhiana", "Patiala", "Mohali"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer"],
+  Sikkim: ["Gangtok"],
+  Tamil_Nadu: ["Chennai", "Coimbatore", "Madurai", "Salem"],
+  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
+  Tripura: ["Agartala"],
+  Uttar_Pradesh: ["Lucknow", "Kanpur", "Noida", "Varanasi", "Agra"],
+  Uttarakhand: ["Dehradun", "Haridwar", "Rishikesh", "Haldwani"],
+  West_Bengal: ["Kolkata", "Howrah", "Durgapur", "Siliguri"]
 };
 
 const WORKING_DAYS = [
