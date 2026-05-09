@@ -13,8 +13,20 @@ const app = express();
 
 app.use(express.json());
 
+// Parse allowed origins from env (comma-separated) OR fallback to localhost
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : ["http://localhost:5173", "http://localhost:5174"];
+
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174","https://blood-bank-management-system-plum.vercel.app"], // Allow both ports
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS: Origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
