@@ -15,6 +15,8 @@ import {
   Plus
 } from "lucide-react";
 
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || ""}/api`;
+
 const BloodLabDonor = () => {
   const [term, setTerm] = useState("");
   const [results, setResults] = useState([]);
@@ -44,7 +46,7 @@ const BloodLabDonor = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `/api/blood-lab/donors/search?term=${term}`,
+        `${API_BASE_URL}/blood-lab/donors/search?term=${encodeURIComponent(term)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -65,7 +67,7 @@ const BloodLabDonor = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        "/api/blood-lab/donations/recent",
+        `${API_BASE_URL}/blood-lab/donations/recent`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRecentDonations(res.data.donations || []);
@@ -97,7 +99,7 @@ const BloodLabDonor = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `/api/blood-lab/donors/donate/${selectedDonor._id}`,
+        `${API_BASE_URL}/blood-lab/donors/donate/${selectedDonor._id}`,
         donationData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -105,7 +107,7 @@ const BloodLabDonor = () => {
       toast.success("Donation recorded successfully!");
       setShowDonationForm(false);
       setSelectedDonor(null);
-      searchDonors(); // Refresh search results
+      if (term.trim()) searchDonors(); // Refresh search results only if search is active
       loadRecentDonations(); // Refresh recent donations
     } catch (err) {
       console.error("Donation error:", err);
@@ -118,7 +120,7 @@ const BloodLabDonor = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `/api/blood-lab/donors/donate/${donorId}`,
+        `${API_BASE_URL}/blood-lab/donors/donate/${donorId}`,
         { quantity: 1, remarks: "Quick donation" },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -3,6 +3,8 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { Droplet, Plus, Minus, AlertTriangle, CheckCircle, Calendar, RefreshCw } from "lucide-react";
 
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || ""}/api`;
+
 const HospitalBloodStock = () => {
   const [stock, setStock] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,8 +21,7 @@ const HospitalBloodStock = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      // In HospitalBloodStock component, change the API call:
-const res = await axios.get("/api/hospital/blood/stock", {
+      const res = await axios.get(`${API_BASE_URL}/hospital/blood/stock`, {
   headers: { Authorization: `Bearer ${token}` },
 });
       

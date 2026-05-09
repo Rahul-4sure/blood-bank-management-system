@@ -20,6 +20,8 @@ import {
   Mail as MailIcon
 } from "lucide-react";
 
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || ""}/api`;
+
 const DonorDirectory = () => {
   const [donors, setDonors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ const DonorDirectory = () => {
       });
 
       const res = await axios.get(
-        `/api/hospital/donors?${queryParams}`,
+        `${API_BASE_URL}/hospital/donors?${queryParams}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -84,7 +86,7 @@ const DonorDirectory = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `/api/hopital/donors/${donorId}/contact`,
+        `${API_BASE_URL}/hospital/donors/${donorId}/contact`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
